@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>NOKOINDONET</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,Segoe UI,sans-serif}
+        body{background:#f5f7fb}
+        .navbar{
+            background:white;
+            padding:15px 25px;
+            box-shadow:0 2px 15px rgba(0,0,0,0.05);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            position:sticky;
+            top:0;
+            z-index:100
+        }
+        .left{display:flex;align-items:center;gap:15px}
+        .menu-btn{
+            font-size:28px;
+            cursor:pointer;
+            width:40px;height:40px;
+            display:flex;align-items:center;justify-content:center;
+            border-radius:10px
+        }
+        .menu-btn:hover{background:#f0f0f0}
+        .marquee{
+            font-size:24px;font-weight:800;color:#2563eb;
+            overflow:hidden;width:250px;white-space:nowrap
+        }
+        .marquee span{
+            display:inline-block;
+            animation:geser 8s linear infinite
+        }
+        @keyframes geser{
+            0%{transform:translateX(0)}
+            50%{transform:translateX(-50%)}
+            100%{transform:translateX(0)}
+        }
+        .saldo-top{
+            background:#2563eb;color:white;
+            padding:8px 20px;border-radius:40px;
+            font-weight:700;font-size:16px
+        }
+        .sidebar-overlay{
+            position:fixed;top:0;left:0;
+            width:100%;height:100%;
+            background:rgba(0,0,0,0.3);z-index:1000;
+            display:none
+        }
+        .sidebar{
+            position:fixed;top:0;left:-300px;
+            width:280px;height:100%;
+            background:white;box-shadow:5px 0 20px rgba(0,0,0,0.1);
+            z-index:1001;transition:0.3s;
+            padding:25px 15px;border-radius:0 20px 20px 0
+        }
+        .sidebar.active{left:0}
+        .capsule{
+            width:100%;padding:15px 20px;margin:8px 0;
+            border:2px solid #eaeef2;border-radius:60px;
+            background:white;font-size:16px;font-weight:600;
+            cursor:pointer;text-align:left
+        }
+        .capsule:hover{border-color:#2563eb;background:#f8fafc}
+        .main{width:100%;min-height:calc(100vh - 80px)}
+        .page{display:none;width:100%}
+        .page.active{display:block}
+        .full-container{
+            width:100%;
+            min-height:calc(100vh - 80px);
+            background:white;
+            border-radius:30px 30px 0 0;
+            padding:30px;
+            box-shadow:0 -5px 20px rgba(0,0,0,0.02);
+            margin-top:0
+        }
+        .deposit-box{
+            max-width:500px;
+            margin:0 auto
+        }
+        .saldo-big{
+            background:#f8fafc;
+            padding:30px;
+            border-radius:25px;
+            text-align:center;
+            margin-bottom:30px
+        }
+        .saldo-big .amount{
+            font-size:48px;
+            font-weight:800;
+            color:#2563eb
+        }
+        input{
+            width:100%;
+            padding:18px;
+            margin:20px 0;
+            border:2px solid #e2e8f0;
+            border-radius:20px;
+            font-size:18px
+        }
+        input:focus{outline:none;border-color:#2563eb}
+        .btn{
+            width:100%;
+            padding:18px;
+            background:#2563eb;color:white;
+            border:none;border-radius:60px;
+            font-size:18px;font-weight:700;
+            cursor:pointer;margin:10px 0
+        }
+        .popup{
+            position:fixed;top:0;left:0;
+            width:100%;height:100%;
+            background:rgba(255,255,255,0.98);z-index:2000;
+            display:none;justify-content:center;align-items:center
+        }
+        .popup-content{text-align:center}
+        .loader{
+            width:60px;height:60px;
+            border:5px solid #e2e8f0;border-top:5px solid #2563eb;
+            border-radius:50%;margin:20px auto;
+            animation:spin 1s linear infinite
+        }
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+            gap:15px;
+            margin:30px 0
+        }
+        .country{
+            background:white;border:2px solid #eaeef2;
+            border-radius:20px;padding:20px;cursor:pointer;
+            transition:0.3s
+        }
+        .country:hover{border-color:#2563eb;transform:translateY(-3px)}
+        .country.selected{border-color:#2563eb;background:#f0f7ff}
+        .country.disabled{opacity:0.5;pointer-events:none;background:#f1f5f9}
+        .country-price{color:#2563eb;font-weight:800;font-size:20px;margin-top:8px}
+        .list-nomor{
+            margin-top:40px;
+            background:#f8fafc;
+            border-radius:25px;
+            padding:30px
+        }
+        .nomor-item{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:20px;
+            background:white;
+            border-radius:16px;
+            margin:15px 0;
+            border-left:6px solid #2563eb;
+            box-shadow:0 2px 10px rgba(0,0,0,0.02)
+        }
+        .nomor-number{
+            font-size:20px;
+            font-weight:700;
+            font-family:monospace;
+            margin-top:5px
+        }
+        .status{
+            font-size:13px;padding:6px 16px;border-radius:30px;
+            background:#fef9c3;color:#854d0e
+        }
+        .status.exp{background:#fee2e2;color:#991b1b}
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="left">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div class="marquee"><span>NOKOINDONET</span></div>
+        </div>
+        <div class="saldo-top" id="saldoTop">Rp 0</div>
+    </div>
+
+    <div class="sidebar-overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <h3 style="margin-bottom:20px">☰ MENU</h3>
+        <button class="capsule" onclick="pindah('deposit')">💰 DEPOSIT</button>
+        <button class="capsule" onclick="pindah('beli')">📱 BELI NOMOR</button>
+        <button class="capsule" onclick="pindah('riwayat')">📋 RIWAYAT</button>
+        <button class="capsule" onclick="pindah('bantuan')">❓ BANTUAN</button>
+        <button class="capsule" onclick="pindah('akun')">⚙️ AKUN</button>
+    </div>
+
+    <div class="main">
+        <!-- DEPOSIT PAGE FULL -->
+        <div class="page active" id="page-deposit">
+            <div class="full-container">
+                <div class="deposit-box">
+                    <div class="saldo-big">
+                        <div style="color:#64748b;margin-bottom:5px">SALDO ANDA</div>
+                        <div class="amount" id="saldoDisplay">Rp 0</div>
+                    </div>
+                    <div style="margin:20px 0">
+                        <label style="font-size:18px;font-weight:500">JUMLAH DEPOSIT (MAX 10 JUTA)</label>
+                        <input type="number" id="jumlahDeposit" min="1.000" max="10000000" placeholder="Masukkan nominal">
+                    </div>
+                    <button class="btn" onclick="prosesDeposit()">💳 DEPOSIT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BELI NOMOR PAGE FULL -->
+        <div class="page" id="page-beli">
+            <div class="full-container">
+                <h2 style="font-size:28px;margin-bottom:20px">📱 Pilih Nomor Virtual</h2>
+                <div class="grid" id="negaraList">
+                    <div class="country" onclick="pilihNegara(0)" id="neg0"><div style="font-size:18px;font-weight:600">🇮🇩 INDONESIA</div><div class="country-price">Rp 2.500</div></div>
+                    <div class="country" onclick="pilihNegara(1)" id="neg1"><div style="font-size:18px;font-weight:600">🇮🇳 INDIA</div><div class="country-price">Rp 13.000</div></div>
+                    <div class="country" onclick="pilihNegara(2)" id="neg2"><div style="font-size:18px;font-weight:600">🇵🇰 PAKISTAN</div><div class="country-price">Rp 15.000</div></div>
+                    <div class="country disabled" id="neg3"><div style="font-size:18px;font-weight:600">🇨🇱 CHILI</div><div class="country-price">HABIS</div></div>
+                    <div class="country" onclick="pilihNegara(4)" id="neg4"><div style="font-size:18px;font-weight:600">🇨🇳 CHINA</div><div class="country-price">Rp 7.000</div></div>
+                    <div class="country" onclick="pilihNegara(5)" id="neg5"><div style="font-size:18px;font-weight:600">🇲🇾 MALAYSIA</div><div class="country-price">Rp 17.000</div></div>
+                </div>
+                <button class="btn" onclick="beliNomor()" id="btnBeli" disabled style="max-width:300px;margin:20px 0">🔒 PILIH NEGARA</button>
+                
+                <div class="list-nomor" id="nomorList">
+                    <h2 style="font-size:24px;margin-bottom:25px">📋 Nomor Aktif Saya</h2>
+                    <div id="daftarNomor"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE LAIN FULL -->
+        <div class="page" id="page-riwayat"><div class="full-container"><h2>📜 RIWAYAT TRANSAKSI</h2><p style="color:#64748b;margin-top:30px;font-size:18px">Belum ada transaksi</p></div></div>
+        <div class="page" id="page-bantuan"><div class="full-container"><h2>❓ BANTUAN</h2><p style="margin-top:30px;font-size:18px">Hubungi: @nokoindonet</p></div></div>
+        <div class="page" id="page-akun"><div class="full-container"><h2>⚙️ PENGATURAN AKUN</h2><p style="margin-top:30px;font-size:18px">Fitur dalam pengembangan</p></div></div>
+    </div>
+
+    <!-- POPUP -->
+    <div class="popup" id="popupLoading">
+        <div class="popup-content">
+            <h2 style="font-size:28px">MEMPROSES</h2>
+            <div class="loader"></div>
+            <p style="font-size:18px">Proses...</p>
+        </div>
+    </div>
+
+    <div class="popup" id="popupSuccess">
+        <div class="popup-content">
+            <h2 style="font-size:32px">✅ BERHASIL</h2>
+            <p style="font-size:20px;margin:20px 0" id="pesanSukses">Deposit berhasil!</p>
+            <button class="btn" style="width:auto;padding:12px 50px" onclick="tutupPopup()">OKE</button>
+        </div>
+    </div>
+
+    <div class="popup" id="popupGagal">
+        <div class="popup-content">
+            <h2 style="font-size:32px">❌ GAGAL</h2>
+            <p style="font-size:20px;margin:20px 0" id="pesanGagal">Saldo tidak cukup!</p>
+            <button class="btn" style="width:auto;padding:12px 50px;background:#dc2626" onclick="tutupPopup()">OKE</button>
+        </div>
+    </div>
+
+    <script>
+        // LOAD DATA DARI LOCALSTORAGE
+        let saldo = localStorage.getItem('nokosSaldo') ? parseInt(localStorage.getItem('nokosSaldo')) : 150000
+        let nomorList = localStorage.getItem('nokosNomor') ? JSON.parse(localStorage.getItem('nokosNomor')) : []
+        
+        let selectedNegara = -1
+        let dataNegara = [
+            {nama:'INDONESIA',harga:2500,kode:'🇮🇩'},
+            {nama:'INDIA',harga:13000,kode:'🇮🇳'},
+            {nama:'PAKISTAN',harga:15000,kode:'🇵🇰'},
+            {nama:'CHILI',harga:0,kode:'🇨🇱',habis:true},
+            {nama:'CHINA',harga:7000,kode:'🇨🇳'},
+            {nama:'MALAYSIA',harga:17000,kode:'🇲🇾'}
+        ]
+
+        // FUNGSI SIMPAN KE LOCALSTORAGE
+        function simpanData() {
+            localStorage.setItem('nokosSaldo', saldo)
+            localStorage.setItem('nokosNomor', JSON.stringify(nomorList))
+        }
+
+        function toggleMenu(){
+            document.getElementById('sidebar').classList.toggle('active')
+            document.getElementById('overlay').style.display = document.getElementById('sidebar').classList.contains('active') ? 'block' : 'none'
+        }
+
+        function pindah(page){
+            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+            document.getElementById('page-'+page).classList.add('active')
+            toggleMenu()
+            if(page==='beli') {
+                renderNegara()
+                renderNomor()
+            }
+        }
+
+        function renderNegara(){
+            for(let i=0;i<dataNegara.length;i++){
+                let el = document.getElementById('neg'+i)
+                if(el){
+                    if(dataNegara[i].habis){
+                        el.classList.add('disabled')
+                        el.setAttribute('onclick','')
+                    }else{
+                        el.classList.remove('disabled')
+                        el.setAttribute('onclick',`pilihNegara(${i})`)
+                    }
+                }
+            }
+        }
+
+        function pilihNegara(idx){
+            document.querySelectorAll('.country').forEach(c=>c.classList.remove('selected'))
+            document.getElementById('neg'+idx).classList.add('selected')
+            selectedNegara = idx
+            document.getElementById('btnBeli').disabled = false
+            document.getElementById('btnBeli').innerHTML = `💳 BELI ${dataNegara[idx].nama} Rp ${dataNegara[idx].harga.toLocaleString()}`
+        }
+
+        function prosesDeposit(){
+            let jumlah = parseInt(document.getElementById('jumlahDeposit').value)
+            if(!jumlah || jumlah < 1 || jumlah > 10000000){
+                document.getElementById('pesanGagal').innerHTML = 'Maksimal Rp 10.000.000'
+                document.getElementById('popupGagal').style.display='flex'
+                return
+            }
+            document.getElementById('popupLoading').style.display='flex'
+            setTimeout(()=>{
+                document.getElementById('popupLoading').style.display='none'
+                saldo += jumlah
+                updateSaldo()
+                simpanData() // SIMPAN KE LOCALSTORAGE
+                document.getElementById('pesanSukses').innerHTML = `Deposit Rp ${jumlah.toLocaleString()} berhasil!`
+                document.getElementById('popupSuccess').style.display='flex'
+                document.getElementById('jumlahDeposit').value=''
+            },4000)
+        }
+
+        function beliNomor(){
+            if(selectedNegara===-1) return
+            let negara = dataNegara[selectedNegara]
+            if(saldo < negara.harga){
+                document.getElementById('pesanGagal').innerHTML = 'Saldo tidak cukup!'
+                document.getElementById('popupGagal').style.display='flex'
+                return
+            }
+            
+            saldo -= negara.harga
+            updateSaldo()
+            
+            let prefix = ['0812','0813','0821','0852','0877','0896','0856','0814','0822','0853']
+            let nomorBaru = prefix[Math.floor(Math.random()*prefix.length)] + Math.floor(Math.random()*10000000).toString().padStart(7,'0')
+            
+            nomorList.unshift({
+                negara: negara.nama,
+                kode: negara.kode,
+                nomor: nomorBaru,
+                waktu: new Date().toISOString()
+            })
+            
+            simpanData() // SIMPAN KE LOCALSTORAGE
+            renderNomor()
+            document.getElementById('pesanSukses').innerHTML = `Berhasil beli nomor ${negara.nama}`
+            document.getElementById('popupSuccess').style.display='flex'
+        }
+
+        function renderNomor(){
+            let html = ''
+            for(let n of nomorList){
+                let now = new Date()
+                let waktu = new Date(n.waktu)
+                let diff = Math.floor((now - waktu)/1000/60)
+                let statusText = diff<10 ? '⏳ Pending ' : '⌛ Expired'
+                let statusClass = diff<10 ? 'status' : 'status exp'
+                
+                html += `<div class="nomor-item">
+                    <div>
+                        <div style="font-size:18px;font-weight:600">${n.kode} ${n.negara}</div>
+                        <div class="nomor-number">${n.nomor}</div>
+                    </div>
+                    <div class="${statusClass}">${statusText}</div>
+                </div>`
+            }
+            if(html==='') html = '<p style="color:#94a3b8;font-size:18px;text-align:center;padding:40px">Belum ada nomor yang dibeli</p>'
+            document.getElementById('daftarNomor').innerHTML = html
+        }
+
+        function updateSaldo(){
+            document.getElementById('saldoTop').innerHTML = `Rp ${saldo.toLocaleString()}`
+            document.getElementById('saldoDisplay').innerHTML = `Rp ${saldo.toLocaleString()}`
+        }
+
+        function tutupPopup(){
+            document.getElementById('popupSuccess').style.display='none'
+            document.getElementById('popupGagal').style.display='none'
+        }
+
+        // INITIAL RENDER
+        updateSaldo()
+        renderNegara()
+        renderNomor()
+        
+        // UPDATE STATUS TIAP 10 DETIK
+        setInterval(renderNomor,10000)
+    </script>
+</body>
+  </html>
